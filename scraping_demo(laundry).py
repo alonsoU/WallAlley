@@ -15,7 +15,7 @@ with webdriver.Chrome("C:/Users/Alonso Uribe/AppData/Local/Chromium/User Data/ch
     driver.get("https://www.flipkart.com/washing-machines/fully-automatic-"
                "front-load~function/pr?sid=j9e%2Cabm%2C8qx&otracker=nmenu_sub_"
                "TVs%20%26%20Appliances_0_Fully%20Automatic%20Front%20Load")
-    wait = WebDriverWait(driver, 15)
+    wait = WebDriverWait(driver, 10)
     max_iter = 100
     for i in range(max_iter):
         content = driver.page_source
@@ -42,7 +42,7 @@ with webdriver.Chrome("C:/Users/Alonso Uribe/AppData/Local/Chromium/User Data/ch
         next_page = prev_next[-1] # 0=previous, 1=next when the driver is located between 1 and 9
         next_page_url = prev_next[-1].get_attribute("href")
         print(next_page_url)
-        webdriver.ActionChains(driver).move_to_element(next_page).click().perform()
+        webdriver.ActionChains(driver).click(next_page).perform()
         wait.until(EC.url_to_be(next_page_url)) # Waiting until it's at the url clicked
         wait.until(EC.visibility_of_all_elements_located((By.TAG_NAME, "a")))
         wait.until(EC.visibility_of_all_elements_located((By.CSS_SELECTOR, "div._4rR01T"))) # until it sees all list elements
