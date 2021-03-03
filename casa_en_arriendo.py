@@ -11,12 +11,13 @@ import numpy as np
 def scrap_pageone():
     rows = []
     with webdriver.Chrome("C:/Users/Alonso Uribe/AppData/Local/Chromium/User Data/chromedriver.exe") as driver:
-        driver.get("https://www.portalinmobiliario.com/arriendo/casa/3-dormitorios/metropolitana#applied_filter"
-                   "_id=state&applied_filte_name=Ubicaci%C3%B3n&applied_filter_order=1&applied_value_id="
-                   "TUxDUE1FVEExM2JlYg&applied_value_name=RM%20(Metropolitana)&applied_value_order=11&applied_value_results=238")
+        driver.get("https://www.portalinmobiliario.com/arriendo/casa/3-dormitorios/metropolitana/_PriceRange_0CLP-750000CLP")
         #driver.maximize_window()
         cookies = driver.find_element(By.XPATH, "//button[@id='cookieDisclaimerButton']")
-        webdriver.ActionChains(driver).click(cookies).perform()
+        try:
+            webdriver.ActionChains(driver).click(cookies).perform()
+        except NoSuchElementException:
+            pass
         driver.implicitly_wait(2)
         wait = WebDriverWait(driver, 10)
         max_iter = 100
