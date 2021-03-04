@@ -42,4 +42,4 @@ print(df.head(10))
 for column in df:
     print(df[column].dtype)
 
-df.to_csv('Data/communes_of_chile.csv')
+df.to_csv('Data/communes_of_chile.csv', index=False)
