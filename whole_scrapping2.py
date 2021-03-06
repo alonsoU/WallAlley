@@ -78,6 +78,8 @@ def scrapping_all():
                         property_type = y
                         break
                 else:
+                    webdriver.ActionChains(driver).move_to_element(properties_pointer).click()\
+                    .perform()
                     continue
                 webdriver.ActionChains(driver).move_to_element(property_type).click() \
                     .send_keys(Keys.ESCAPE) \
