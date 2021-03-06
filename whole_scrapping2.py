@@ -77,6 +77,8 @@ def scrapping_all():
                     if y.text == property:
                         property_type = y
                         break
+                else:
+                    continue
                 webdriver.ActionChains(driver).move_to_element(property_type).click() \
                     .send_keys(Keys.ESCAPE) \
                     .move_to_element(search_button) \
@@ -117,12 +119,14 @@ def scrapping_all():
                         EC.url_to_be(next_url))  # Waiting until it's at the url clicked
                     wait.until(
                         EC.presence_of_all_elements_located((By.TAG_NAME, "li")))  # until all list elements can be seen
+                    #print(types_list)
                     #break # debugging
                 # Here, when some houses search of variable's configuration ends,
                 # the driver goes back to the main page(origin), where webelements are reset
                 # and the next variable's configuration's search start
                 driver.get(origin_url)
                 wait.until(EC.url_to_be(origin_url))
+                wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, "li")))
                 menu_pointer = driver.find_element(By.XPATH, menu_xpath)
                 search_button = menu_pointer.find_element(
                     By.XPATH, "//searchbox-button[@id='search-submit']"
