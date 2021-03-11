@@ -19,7 +19,7 @@ def scrapping_all():
     with webdriver.Chrome("C:/Users/Alonso Uribe/AppData/Local/Chromium/User Data/chromedriver.exe") as driver:
         driver.get("https://www.portalinmobiliario.com/")
         origin_url = driver.current_url
-        wait = WebDriverWait(driver, 30)
+        wait = WebDriverWait(driver, 60)
         cookies = driver.find_element(By.XPATH, "//button[@id='cookieDisclaimerButton']")
         try:
             webdriver.ActionChains(driver).click(cookies).perform()
@@ -96,9 +96,9 @@ def scrapping_all():
                     for house in soup.findAll("li", class_="ui-search-layout__item"):
                         price_elem = house.find("span")
                         price = [price_elem.text]
-                        features_elems = house.findAll("li")
+                        features_elems = house.find_all("li")
                         features = [elem.text for elem in features_elems]
-                        location_elem = house.findAll("p")
+                        location_elem = house.find_all("p")
                         location = [elem.text for elem in location_elem]
                         all = [item.strip().lower()
                                for sublist in [price, features, location, types_list]
