@@ -19,19 +19,21 @@ def scrapping_all():
     with webdriver.Chrome("C:/Users/Alonso Uribe/AppData/Local/Chromium/User Data/chromedriver.exe") as driver:
         driver.get("https://www.portalinmobiliario.com/")
         origin_url = driver.current_url
-        wait = WebDriverWait(driver, 1)
+        wait = WebDriverWait(driver, 10)
         try:
             cookies = driver.find_element(By.XPATH, "//button[@id='newCookieDisclaimerButton']")
             webdriver.ActionChains(driver).click(cookies).perform()
         except NoSuchElementException:
             pass
-        driver.implicitly_wait(1)
+        #driver.implicitly_wait(1) # No lo veo necesario
         # Primer boton de busqueda
         driver.find_element(
             By.XPATH,
-            "//span[@class='andes-button__content']") \
+            f"//span[@class='andes-button__content']") \
             .click()
+
         # Segundo boton de busqueda(?)
+        wait.until(EC.url_changes(origin_url))
         menu_xpath = f"//div[@class='ui-search-faceted-search']" 
         menu_pointer = driver.find_element(By.XPATH, menu_xpath) # Menu de busqueda
         offers_pointer, properties_pointer = menu_pointer.find_elements(By.XPATH,
@@ -50,7 +52,7 @@ def scrapping_all():
             perform()
         driver.implicitly_wait(1)
         for offer_type in offers_pointer.find_elements(By.TAG_NAME, 'li'):
-            offers.append(sell_type.text)
+            offers.append(offer_type.text)
         # Habre  la lista de tipos de inmuebles
         webdriver.ActionChains(driver).move_to_element(properties_pointer). \
             click(). \
@@ -81,7 +83,7 @@ def scrapping_all():
                         property_type = y # Pointer actual guardado
                         break # La idea en estos dos ultimos breaks es alinear los
                               # pointer con las tupla fe oferta (ej: {Ventas, Departamentos})
-                # 'else' de contención, ¡revisar! (parece q no hace mucho)
+                # 'else' de contención. Sigue a la siguiente combinación, por si no existe
                 else:
                     webdriver.ActionChains(driver).move_to_element(properties_pointer).click()\
                     .perform()
@@ -91,7 +93,7 @@ def scrapping_all():
                     .move_to_element(search_button) \
                     .click() \
                     .perform()
-                wait.until(EC.url_changes(origin_url))
+                #wait.until(EC.url_changes(origin_url))
                 max_iter = 100
                 types_list = [offer, property]
                 for j in range(max_iter):
@@ -99,16 +101,18 @@ def scrapping_all():
                     content = driver.page_source
                     soup = BeautifulSoup(content, "html.parser")
                     for house in soup.findAll("li", class_="ui-search-layout__item"):
-                        price_elem = house.find("span")
-                        price = [price_elem.text]
-                        features_elems = house.find_all("li")
+                        price_elem = house.find("span", class_="price-tag-fraction")
+                        price = price_elem.text
+                        tag_elem = house.find("span", class_="price-tag-symbol")
+                        tag = tag_elem.text
+                        features_elems = house.find_all("li", class_="ui-search-card-attributes__attribute")
                         features = [elem.text for elem in features_elems]
-                        location_elem = house.find_all("p")
+                        location_elem = house.find("div", class_="ui-search-item__group ui-search-item__group--location"). \
+                            find("p")
                         location = [elem.text for elem in location_elem]
-                        all = [item.strip().lower()
-                               for sublist in [price, features, location, types_list]
-                               for item in sublist]
-                        rows.append(all)
+                        all_features = [item.strip().lower()
+                               for item in [price, tag, *features, *location, *types_list]]
+                        rows.append(all_features)
                     next_page_locator = By.XPATH, "//a[@title='Siguiente' and @role='button']"
                     try:
                         next_page = driver.find_element(
