@@ -19,41 +19,39 @@ def scrapping_all():
     with webdriver.Chrome("C:/Users/Alonso Uribe/AppData/Local/Chromium/User Data/chromedriver.exe") as driver:
         driver.get("https://www.portalinmobiliario.com/")
         origin_url = driver.current_url
-        wait = WebDriverWait(driver, 5)
+        wait = WebDriverWait(driver, 1)
         try:
             cookies = driver.find_element(By.XPATH, "//button[@id='newCookieDisclaimerButton']")
-            print(cookies)
-            
             webdriver.ActionChains(driver).click(cookies).perform()
         except NoSuchElementException:
             pass
         driver.implicitly_wait(1)
-        try:
-            driver.find_element(
-                By.XPATH,
-                "//span[@role='button' and @class='andes-tooltip-button-close']") \
-                .click()
-        except NoSuchElementException:
-            pass
-
-        menu_class = "searchbox"
-        menu_xpath = f"//searchbox-realestate[@class='{menu_class}']"
-        menu_pointer = driver.find_element(By.XPATH, menu_xpath)
-        pointers_xpath = f"//searchbox-dropdown"
-        sells_pointer, properties_pointer = menu_pointer.find_elements(By.XPATH, pointers_xpath)
-        search_button = menu_pointer.find_element(
-            By.XPATH, "//searchbox-button[@id='search-submit']"
-        )
+        # Primer boton de busqueda
+        driver.find_element(
+            By.XPATH,
+            "//span[@class='andes-button__content']") \
+            .click()
+        # Segundo boton de busqueda(?)
+        menu_xpath = f"//div[@class='ui-search-faceted-search']" 
+        menu_pointer = driver.find_element(By.XPATH, menu_xpath) # Menu de busqueda
+        offers_pointer, properties_pointer = menu_pointer.find_elements(By.XPATH,
+            "//div[@class='ui-search-faceted-search--searchbox-dropdown']"
+            )
+        search_button = menu_pointer.find_element(By.XPATH,
+            "//button[@class='andes-button andes-button--large andes-button--loud']"
+            )
         # Collecting all the posible variables configuration,
         # then it's just needed to change the respective url
-        sells = []
+        offers = []
         properties = []
-        webdriver.ActionChains(driver).move_to_element(sells_pointer). \
+        # Habre la lista de tipos de oferta
+        webdriver.ActionChains(driver).move_to_element(offers_pointer). \
             click(). \
             perform()
         driver.implicitly_wait(1)
-        for sell_type in sells_pointer.find_elements(By.TAG_NAME, 'li'):
-            sells.append(sell_type.text)
+        for offer_type in offers_pointer.find_elements(By.TAG_NAME, 'li'):
+            offers.append(sell_type.text)
+        # Habre  la lista de tipos de inmuebles
         webdriver.ActionChains(driver).move_to_element(properties_pointer). \
             click(). \
             perform()
@@ -63,13 +61,16 @@ def scrapping_all():
         webdriver.ActionChains(driver)\
             .move_to_element(properties_pointer).send_keys(Keys.ESCAPE).perform()
 
-        for sell in sells:
-            webdriver.ActionChains(driver).move_to_element(sells_pointer).click().perform()
-            for x in sells_pointer.find_elements(By.TAG_NAME, "li"):
-                if x.text == sell:
-                    sell_type = x
+        # Recorriendo todo tipo de oferta
+        for offer in offers:
+            webdriver.ActionChains(driver).move_to_element(offers_pointer).click().perform()
+            # Compara la config del menu con 
+            for x in offers_pointer.find_elements(By.TAG_NAME, "li"):
+                if x.text == offer:
+                    offer_type = x # Pointer actual guardado
                     break
-            webdriver.ActionChains(driver).move_to_element(sell_type).click() \
+            # Clickeando pointer actual y cerrando la lista
+            webdriver.ActionChains(driver).move_to_element(offer_type).click() \
                 .send_keys(Keys.ESCAPE) \
                 .perform()
             for property in properties:
@@ -77,8 +78,10 @@ def scrapping_all():
                     .perform()
                 for y in properties_pointer.find_elements(By.TAG_NAME, "li"):
                     if y.text == property:
-                        property_type = y
-                        break
+                        property_type = y # Pointer actual guardado
+                        break # La idea en estos dos ultimos breaks es alinear los
+                              # pointer con las tupla fe oferta (ej: {Ventas, Departamentos})
+                # 'else' de contención, ¡revisar! (parece q no hace mucho)
                 else:
                     webdriver.ActionChains(driver).move_to_element(properties_pointer).click()\
                     .perform()
@@ -90,7 +93,7 @@ def scrapping_all():
                     .perform()
                 wait.until(EC.url_changes(origin_url))
                 max_iter = 100
-                types_list = [sell, property]
+                types_list = [offer, property]
                 for j in range(max_iter):
                     # This is the scrapping of just one page of the higher variables's configuration
                     content = driver.page_source

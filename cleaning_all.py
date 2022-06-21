@@ -91,9 +91,11 @@ def clean_areas(area):
         return pd.NA
     elif "ha" in area:
         msq = [float(value)*10000 for value in area.split() if value.isnumeric()]
+        msq = msq[0] if len(msq) == 1 else msq
         return msq
     elif "tiles" in area or "totales" in area:
         msq = [float(value) for value in area.split() if value.isnumeric()]
+        msq = msq[0] if len(msq) == 1 else msq
         return msq
     else:
         return pd.NA
@@ -102,6 +104,7 @@ def clean_rooms(room):
         return pd.NA
     elif "dormitorio" in room:
         n_rooms = [float(value) for value in room.split() if value.isnumeric()]
+        n_rooms = n_rooms[0] if len(n_rooms) == 1 else n_rooms
         return n_rooms
     else:
         return pd.NA
@@ -165,17 +168,47 @@ def check_for_odd_type():
 prop.iloc[:,3] = prop.iloc[:,3:].apply(lambda x: ' '.join([str(c).lower().strip() for c in x]), axis=1)
 prop = prop.drop(columns=[4,5], axis=0)
 
-print(prop["location"])
-comm_df = pd.read_csv("/Data/communes_of_chile.csv")
-for column in comm_df.iteritems():
-    for i, value in enumerate(prop['location']):
-        values = []
-        for comuna in comunas:
-            if comuna in value:
-                values.append(comuna)
-        prop.iloc[i,3] = values[-1].strip() if len(values) != 0 else pd.NA
+comm_df = pd.read_csv("Data/communes_of_chile.csv")
+#comm_df = comm_df.drop(comm_df.columns[2], axis=1)
+#comm_df.to_csv("Data/communes_of_chile.csv", index=False)
+#print(sorted(comm_df["comuna"].unique()))
+def lil_cleaning(value):
+    if value == "":
+        return pd.NA
+    aux = [" "+val.strip()+" " for val in value.split(",")]
+    if len(aux) == 1:
+        return aux[0].strip()
+    while True:
+        for value in aux:
+            mask = map(lambda x: value in x, aux)
+            if sum(mask) > 1:
+                aux = [val for val in aux if val != value]
+                break
+        else:
+            break
+    aux = ", ".join([val.strip() for val in aux])
+    return aux
+last_column = pd.Series([])
+def selected_values(value, last_index, df):
+    for cpr in cpr_values:
+        if cpr in value:
+            pass
+    new_value = ", ".join()
 
-print(prop['location'].unique())
+    return new_value
+for index, column in comm_df[["región", "comuna"]].iteritems():
+    cpr_values = column.unique()
+    #hasdata_masks = [prop["location"].apply(lambda value: comm_values in value) for comm_values in comm_values]
+    #print(f"Column {index}:\n", [df.sum() for df in hasdata_masks])
+    if not last_column.empty:
+
+    prop[index] = prop["location"].apply(selected_values)
+    #prop.loc[:,index] = prop.loc[:,index].apply(lambda value: value if value != "" else pd.NA)
+    prop.loc[:, index] = prop.loc[:, index].apply(lambda value: lil_cleaning(value))
+
+print(prop.iloc[:,-2:])
+print(prop.iloc[:,-1].isna().sum())
+
 mask_index = prop['location'] == 'peñalolén'
 ax = prop[mask_index].plot(y='price', legend=False, kind='line')
 ax2 = ax.twinx()

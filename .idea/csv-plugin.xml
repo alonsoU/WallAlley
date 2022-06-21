@@ -24,13 +24,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\inmobiliary_stadistics.py">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
       </map>
     </option>
   </component>
