@@ -94,9 +94,9 @@ def scrapping_all():
                     .click() \
                     .perform()
                 wait.until(EC.invisibility_of_element(search_button)) # Checking if the page has change by asserting that
-                    # the page to change element is still visible
+                    # AN elemenT on the page to change is still visible
                 #wainting(wait=wait)
-                max_iter = 1
+                max_iter = 100
                 types_list = [offer, property]
                 for j in range(max_iter):
                     # This is the scrapping of just one page of the higher variables's configuration
@@ -110,25 +110,24 @@ def scrapping_all():
                         features_elems = house.find_all("li", class_="ui-search-card-attributes__attribute")
                         features = [elem.text for elem in features_elems]
                         location_elem = house.find("div", class_="ui-search-item__group ui-search-item__group--location"). \
-                            find("p")
+                            find_all("p")
                         location = [elem.text for elem in location_elem]
                         all_features = [item.strip().lower()
-                               for item in [price, tag, *features, *location, *types_list]]
+                               for item in [*types_list, price, tag, *location, *features]]
                         rows.append(all_features)
                     
                     next_page_locator = By.XPATH, "//a[@title='Siguiente' and @role='button']"
                     wainting(tag_name="button", wait=wait)
                     try:                       
-                        next_page = driver.find_element(
-                            *next_page_locator)  # Two elements with the same class, Previous and Next
-                        next_url = next_page.get_attribute("href")
+                        next_page = driver.find_element(*next_page_locator)
                     except NoSuchElementException:
                         print(f"All pages scrapped from configuration {types_list[0]}-{types_list[1]}. \n"
                               f"{j+1} pages have been screpped")
                         break # Final page, there is no next button
                     wait.until(EC.element_to_be_clickable(next_page_locator))
                     next_page.click()
-                    wainting(tag_name="li", next_url=next_url, wait=wait)
+                    wait.until(EC.invisibility_of_element(next_page))
+                    #wainting(tag_name="li", next_url=next_url, wait=wait)
                     # Waiting until it's at the url clicked
                     # until all list elements can be seen
                     #print(types_list)
@@ -136,13 +135,6 @@ def scrapping_all():
                 # Here, when some houses search of variable's configuration ends,
                 # the driver goes back to the main page(origin), where webelements are reset
                 # and the next variable's configuration's search start
-                #driver.get(origin_url)
-                #wainting(next_url=origin_url, wait=wait)
-                #first_searchbutton = driver.find_element(
-                #    By.XPATH, "//span[@class='andes-button__content']")
-                #first_searchbutton.click()
-                #wainting(last_url=origin_url, wait=wait)
-
                 menu_pointer = driver.find_element(*menu_locator)
                 search_button = menu_pointer.find_element(*search_button_locator)
                 offers_pointer, properties_pointer = menu_pointer.find_elements(*pointers_locator)
