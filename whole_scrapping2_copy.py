@@ -1,3 +1,6 @@
+from ctypes import pointer
+from multiprocessing.connection import wait
+from re import search
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import pandas as pd
@@ -6,14 +9,18 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
-import numpy as np
-import time
 
 def webelement_to_xpath(webelement, by):
     name = webelement.tag_name
     class_ = webelement.get_attribute(by)
     xpath = f"//{name}[@{by}='{class_}']"
     return xpath
+def wainting(tag_name="div", next_url=None, last_url=None, wait=wait):
+    if next_url is not None:
+        wait.until(EC.url_matches(next_url))
+    if last_url is not None:
+        wait.until(EC.url_changes(last_url))
+    wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, tag_name)))
 def scrapping_all():
     rows = []
     with webdriver.Chrome("C:/Users/Alonso Uribe/AppData/Local/Chromium/User Data/chromedriver.exe") as driver:
@@ -27,21 +34,17 @@ def scrapping_all():
             pass
         #driver.implicitly_wait(1) # No lo veo necesario
         # Primer boton de busqueda
-        driver.find_element(
-            By.XPATH,
-            f"//span[@class='andes-button__content']") \
-            .click()
-
+        first_searchbutton = driver.find_element(
+            By.XPATH, "//span[@class='andes-button__content']")
+        first_searchbutton.click()
         # Segundo boton de busqueda(?)
-        wait.until(EC.url_changes(origin_url))
-        menu_xpath = f"//div[@class='ui-search-faceted-search']" 
-        menu_pointer = driver.find_element(By.XPATH, menu_xpath) # Menu de busqueda
-        offers_pointer, properties_pointer = menu_pointer.find_elements(By.XPATH,
-            "//div[@class='ui-search-faceted-search--searchbox-dropdown']"
-            )
-        search_button = menu_pointer.find_element(By.XPATH,
-            "//button[@class='andes-button andes-button--large andes-button--loud']"
-            )
+        wainting(last_url=origin_url, wait=wait)
+        menu_locator =By.XPATH, "//div[@class='ui-search-faceted-search']" 
+        menu_pointer = driver.find_element(*menu_locator) # Menu de busqueda
+        pointers_locator = By.XPATH, "//div[@class='ui-search-faceted-search--searchbox-dropdown']"
+        offers_pointer, properties_pointer = menu_pointer.find_elements(*pointers_locator)
+        search_button_locator = By.XPATH, "//button[@class='andes-button andes-button--large andes-button--loud']"
+        search_button = menu_pointer.find_element(*search_button_locator)
         # Collecting all the posible variables configuration,
         # then it's just needed to change the respective url
         offers = []
@@ -50,14 +53,12 @@ def scrapping_all():
         webdriver.ActionChains(driver).move_to_element(offers_pointer). \
             click(). \
             perform()
-        driver.implicitly_wait(1)
         for offer_type in offers_pointer.find_elements(By.TAG_NAME, 'li'):
             offers.append(offer_type.text)
         # Habre  la lista de tipos de inmuebles
         webdriver.ActionChains(driver).move_to_element(properties_pointer). \
             click(). \
             perform()
-        driver.implicitly_wait(1)
         for property_type in properties_pointer.find_elements(By.TAG_NAME, 'li'):
             properties.append(property_type.text)
         webdriver.ActionChains(driver)\
@@ -76,8 +77,7 @@ def scrapping_all():
                 .send_keys(Keys.ESCAPE) \
                 .perform()
             for property in properties:
-                webdriver.ActionChains(driver).move_to_element(properties_pointer).click() \
-                    .perform()
+                properties_pointer.click()
                 for y in properties_pointer.find_elements(By.TAG_NAME, "li"):
                     if y.text == property:
                         property_type = y # Pointer actual guardado
@@ -93,8 +93,10 @@ def scrapping_all():
                     .move_to_element(search_button) \
                     .click() \
                     .perform()
-                #wait.until(EC.url_changes(origin_url))
-                max_iter = 100
+                wait.until(EC.invisibility_of_element(search_button)) # Checking if the page has change by asserting that
+                    # the page to change element is still visible
+                #wainting(wait=wait)
+                max_iter = 1
                 types_list = [offer, property]
                 for j in range(max_iter):
                     # This is the scrapping of just one page of the higher variables's configuration
@@ -113,8 +115,10 @@ def scrapping_all():
                         all_features = [item.strip().lower()
                                for item in [price, tag, *features, *location, *types_list]]
                         rows.append(all_features)
+                    
                     next_page_locator = By.XPATH, "//a[@title='Siguiente' and @role='button']"
-                    try:
+                    wainting(tag_name="button", wait=wait)
+                    try:                       
                         next_page = driver.find_element(
                             *next_page_locator)  # Two elements with the same class, Previous and Next
                         next_url = next_page.get_attribute("href")
@@ -123,28 +127,28 @@ def scrapping_all():
                               f"{j+1} pages have been screpped")
                         break # Final page, there is no next button
                     wait.until(EC.element_to_be_clickable(next_page_locator))
-                    webdriver.ActionChains(driver) \
-                        .move_to_element(next_page) \
-                        .click(next_page).perform()
-                    wait.until(
-                        EC.url_to_be(next_url))  # Waiting until it's at the url clicked
-                    wait.until(
-                        EC.presence_of_all_elements_located((By.TAG_NAME, "li")))  # until all list elements can be seen
+                    next_page.click()
+                    wainting(tag_name="li", next_url=next_url, wait=wait)
+                    # Waiting until it's at the url clicked
+                    # until all list elements can be seen
                     #print(types_list)
-                    #break # debugging
+                    
                 # Here, when some houses search of variable's configuration ends,
                 # the driver goes back to the main page(origin), where webelements are reset
                 # and the next variable's configuration's search start
-                driver.get(origin_url)
-                wait.until(EC.url_to_be(origin_url))
-                wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, "li")))
-                menu_pointer = driver.find_element(By.XPATH, menu_xpath)
-                search_button = menu_pointer.find_element(
-                    By.XPATH, "//searchbox-button[@id='search-submit']"
-                )
-                sells_pointer, properties_pointer = menu_pointer.find_elements(By.XPATH, pointers_xpath)
+                #driver.get(origin_url)
+                #wainting(next_url=origin_url, wait=wait)
+                #first_searchbutton = driver.find_element(
+                #    By.XPATH, "//span[@class='andes-button__content']")
+                #first_searchbutton.click()
+                #wainting(last_url=origin_url, wait=wait)
+
+                menu_pointer = driver.find_element(*menu_locator)
+                search_button = menu_pointer.find_element(*search_button_locator)
+                offers_pointer, properties_pointer = menu_pointer.find_elements(*pointers_locator)
+
 
     df = pd.DataFrame(rows)
     return df
 dataframe = scrapping_all()
-dataframe.to_csv("Data/all_house_data_raw.csv", index=False)
+dataframe.to_csv("Data/real_estate_data_raw.csv", index=False)
