@@ -201,10 +201,9 @@ for index, column in comm_df[["región", "comuna"]].iteritems():
     #hasdata_masks = [prop["location"].apply(lambda value: comm_values in value) for comm_values in comm_values]
     #print(f"Column {index}:\n", [df.sum() for df in hasdata_masks])
     if not last_column.empty:
-
-    prop[index] = prop["location"].apply(selected_values)
-    #prop.loc[:,index] = prop.loc[:,index].apply(lambda value: value if value != "" else pd.NA)
-    prop.loc[:, index] = prop.loc[:, index].apply(lambda value: lil_cleaning(value))
+        prop[index] = prop["location"].apply(selected_values)
+        #prop.loc[:,index] = prop.loc[:,index].apply(lambda value: value if value != "" else pd.NA)
+        prop.loc[:, index] = prop.loc[:, index].apply(lambda value: lil_cleaning(value))
 
 print(prop.iloc[:,-2:])
 print(prop.iloc[:,-1].isna().sum())
