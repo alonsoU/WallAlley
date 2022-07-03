@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn
 from matplotlib import pyplot as plt
 # print([num for num in ["1","2","c"] if num.isnumeric()])
-prop = pd.read_csv("Data/all_house_data_raw.csv")
+prop = pd.read_csv("../data/all_house_data_raw.csv")
 prop.columns = ['price', 'area', 'rooms', 'location', 4, 5, 6, "operation", "type"]
 
 def slide_tags_slow(df, slide_size=2):

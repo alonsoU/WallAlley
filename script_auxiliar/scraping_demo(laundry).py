@@ -49,5 +49,5 @@ with webdriver.Chrome("C:/Users/Alonso Uribe/AppData/Local/Chromium/User Data/ch
         wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "_1LKTO3"))) # until the next "next" or "previous" button is clickable
 
 table = pd.DataFrame(data={"Product": products, "Rate": ratings, "Price": prices})
-table.to_csv("Data/Laundry.csv", index=False)
+table.to_csv("..data/Laundry.csv", index=False)
 print(table)

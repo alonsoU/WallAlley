@@ -143,4 +143,4 @@ def scrapping_all():
     df = pd.DataFrame(rows)
     return df
 dataframe = scrapping_all()
-dataframe.to_csv("Data/real_estate_data_raw.csv", index=False)
+dataframe.to_csv("../data/real_estate_data_raw.csv", index=False)
